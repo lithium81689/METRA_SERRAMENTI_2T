@@ -83,7 +83,7 @@ localStorage è legato all'origine del sito. Due versioni pubblicate sotto la st
 
 ## PDF
 
-Il PDF viene costruito direttamente in JavaScript, senza usare la finestra di stampa del browser. Contiene il logo e l'intestazione aziendale e può includere tutte le misure oppure una singola categoria. In fondo al documento aggiunge un riepilogo che accorpa gli elementi con specifiche identiche e ne somma le quantità; per serramenti, balconi, avvolgibili e zanzariere riporta anche le superfici totali calcolate da larghezza e altezza. Su iOS il file può essere aperto in una nuova scheda, mentre sugli altri dispositivi viene scaricato.
+Il PDF viene costruito direttamente in JavaScript, senza usare la finestra di stampa del browser. Contiene il logo e l'intestazione aziendale e può includere tutte le misure oppure una singola categoria. In fondo al documento aggiunge un riepilogo che accorpa gli elementi dello stesso tipo con tutti i dati identici, escluse le note, e ne somma le quantità. Per ogni unità conteggiata viene riportata una riga numerata dedicata alla relativa nota, anche quando la nota è vuota; per serramenti, balconi, avvolgibili e zanzariere sono riportate anche le superfici totali calcolate da larghezza e altezza. Su iOS il file può essere aperto in una nuova scheda, mentre sugli altri dispositivi viene scaricato.
 
 Il logo rimane incorporato in **pdf-logo.js** per preservare la generazione sincrona e il funzionamento senza un caricamento separato dell'immagine.
 
