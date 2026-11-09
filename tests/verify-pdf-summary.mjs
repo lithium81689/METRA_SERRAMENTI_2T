@@ -39,13 +39,28 @@ const stessoSerramento = {
   larghezza: '1000',
   altezza: '1200',
   profondita: '80',
-  quantity: 3
+  quantity: 3,
+  note: 'Telaio nero'
 };
 delete stessoSerramento.quantita;
 
 const gruppiUguali = context.groupPdfMeasurements([serramento, stessoSerramento]);
 assert.equal(gruppiUguali.length, 1);
 assert.equal(gruppiUguali[0].quantity, 5);
+assert.deepEqual(
+  Array.from(gruppiUguali[0].noteItems, item=>item.note),
+  ['Telaio bianco', 'Telaio bianco', 'Telaio nero', 'Telaio nero', 'Telaio nero']
+);
+
+const gruppiCassonettoAssente = context.groupPdfMeasurements([
+  serramento,
+  { ...copy(serramento), cassonetto: { presente: false, note: 'Residuo legacy' } }
+]);
+assert.equal(gruppiCassonettoAssente.length, 1);
+assert.deepEqual(
+  Array.from(gruppiCassonettoAssente[0].noteItems, item=>item.cassonettoNote),
+  ['', '', '', '']
+);
 
 const variantiSerramento = [
   { apertura: 'destra' },
@@ -54,10 +69,13 @@ const variantiSerramento = [
   { larghezza: 1001 },
   { altezza: 1201 },
   { profondita: 81 },
-  { cassonetto: { presente: true, larghezza: 1000, altezza: 200, profondita: 180, note: '' } },
-  { note: 'Telaio nero' }
+  { cassonetto: { presente: true, larghezza: 1000, altezza: 200, profondita: 180, note: '' } }
 ].map((changes,index)=>({ ...copy(serramento), ...changes, id: 'variante-' + index }));
 assert.equal(context.groupPdfMeasurements([serramento, ...variantiSerramento]).length, 1 + variantiSerramento.length);
+assert.equal(
+  context.groupPdfMeasurements([serramento, { ...copy(serramento), tipo: 'porta' }]).length,
+  2
+);
 
 const opzionaleMancante = { ...copy(serramento), profondita: undefined };
 const opzionaleVuoto = { ...copy(serramento), profondita: '' };
@@ -149,15 +167,18 @@ const serramentoConCassonetto = {
   ...copy(serramento),
   cassonetto: { presente: true, larghezza: 1000, altezza: 200, profondita: 180, note: 'Isolato' }
 };
-assert.equal(
-  context.groupPdfMeasurements([
-    serramentoConCassonetto,
-    { ...copy(serramentoConCassonetto), cassonetto: { ...serramentoConCassonetto.cassonetto, larghezza: 1001 } },
-    { ...copy(serramentoConCassonetto), cassonetto: { ...serramentoConCassonetto.cassonetto, altezza: 201 } },
-    { ...copy(serramentoConCassonetto), cassonetto: { ...serramentoConCassonetto.cassonetto, profondita: 181 } },
-    { ...copy(serramentoConCassonetto), cassonetto: { ...serramentoConCassonetto.cassonetto, note: 'Non isolato' } }
-  ]).length,
-  5
+const gruppiCassonetto = context.groupPdfMeasurements([
+  serramentoConCassonetto,
+  { ...copy(serramentoConCassonetto), cassonetto: { ...serramentoConCassonetto.cassonetto, larghezza: 1001 } },
+  { ...copy(serramentoConCassonetto), cassonetto: { ...serramentoConCassonetto.cassonetto, altezza: 201 } },
+  { ...copy(serramentoConCassonetto), cassonetto: { ...serramentoConCassonetto.cassonetto, profondita: 181 } },
+  { ...copy(serramentoConCassonetto), cassonetto: { ...serramentoConCassonetto.cassonetto, note: 'Non isolato' } }
+]);
+assert.equal(gruppiCassonetto.length, 4);
+assert.equal(gruppiCassonetto[0].quantity, 4);
+assert.deepEqual(
+  Array.from(gruppiCassonetto[0].noteItems, item=>item.cassonettoNote),
+  ['Isolato', 'Isolato', 'Non isolato', 'Non isolato']
 );
 
 const misureSuperficie = [
@@ -240,9 +261,58 @@ const integrationClient = {
 const completePdfText = await generatePdfText(integrationClient);
 assert.match(completePdfText, /RIEPILOGO MISURAZIONI/);
 assert.match(completePdfText, /Quantita totale: 5/);
+assert.match(completePdfText, /Nota 1: Telaio bianco/);
+assert.match(completePdfText, /Nota 2: Telaio bianco/);
+assert.match(completePdfText, /Nota 3: Telaio nero/);
+assert.match(completePdfText, /Nota 4: Telaio nero/);
+assert.match(completePdfText, /Nota 5: Telaio nero/);
+assert.equal((completePdfText.match(/Telaio bianco/g) || []).length, 3);
+assert.equal((completePdfText.match(/Telaio nero/g) || []).length, 4);
 assert.match(completePdfText, /Serramenti: 6,00 m2/);
 assert.match(completePdfText, /Balconi: 3,96 m2/);
 assert.match(completePdfText, /Totale complessivo: 9,96 m2/);
+
+const cassonettoPdfText = await generatePdfText({
+  ...copy(integrationClient),
+  id: 'cliente-cassonetto',
+  measurements: [
+    { ...copy(serramentoConCassonetto), roomId: 'r1' },
+    {
+      ...copy(serramentoConCassonetto),
+      roomId: 'r2',
+      cassonetto: { ...serramentoConCassonetto.cassonetto, note: 'Non isolato' }
+    }
+  ]
+});
+assert.match(cassonettoPdfText, /Quantita totale: 4/);
+assert.match(cassonettoPdfText, /Nota cassonetto 1: Isolato/);
+assert.match(cassonettoPdfText, /Nota cassonetto 2: Isolato/);
+assert.match(cassonettoPdfText, /Nota cassonetto 3: Non isolato/);
+assert.match(cassonettoPdfText, /Nota cassonetto 4: Non isolato/);
+assert.equal((cassonettoPdfText.match(/Isolato/g) || []).length, 3);
+assert.equal((cassonettoPdfText.match(/Non isolato/g) || []).length, 3);
+
+const emptyNotesPdfText = await generatePdfText({
+  ...copy(integrationClient),
+  id: 'cliente-note-vuote',
+  measurements: [{ ...copy(portaConDatiIrrilevanti), roomId: 'r1', quantita: 3 }]
+});
+assert.match(emptyNotesPdfText, /Quantita totale: 3/);
+assert.match(emptyNotesPdfText, /Nota 1: -/);
+assert.match(emptyNotesPdfText, /Nota 2: -/);
+assert.match(emptyNotesPdfText, /Nota 3: -/);
+
+const manyNotesPdfText = await generatePdfText({
+  ...copy(integrationClient),
+  id: 'cliente-note-numerose',
+  measurements: [{ ...copy(portaConDatiIrrilevanti), roomId: 'r1', quantita: 80 }]
+});
+assert.ok(pdfPageCount(manyNotesPdfText) >= 2, 'Le note numerose devono continuare su più pagine');
+assert.match(manyNotesPdfText, /Nota 1: -/);
+assert.match(manyNotesPdfText, /Nota 80: -/);
+const manyNotesYPositions = [...manyNotesPdfText.matchAll(/BT \/F[12] [\d.]+ Tf [\d.]+ ([\d.]+) Td \(/g)]
+  .map(match=>Number(match[1]));
+assert.ok(manyNotesYPositions.every(y=>y>=38), 'Le note numerate non devono superare il margine inferiore');
 
 const filteredPdfText = await generatePdfText(integrationClient, 'finestra');
 assert.match(filteredPdfText, /Serramenti: 6,00 m2/);
