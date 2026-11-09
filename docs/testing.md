@@ -36,7 +36,7 @@
 - generare un PDF per ciascuna categoria;
 - controllare logo, intestazione, cliente, stanze, quantità e misure;
 - controllare apertura, dettagli specifici, cassonetto e note;
-- verificare il riepilogo finale, l'accorpamento 1:1 e la somma delle quantità;
+- verificare il riepilogo finale, l'accorpamento degli elementi dello stesso tipo con dati identici escluse le note, una nota numerata per ogni unità conteggiata e la somma delle quantità;
 - verificare i totali in m2 per serramenti, balconi, avvolgibili e zanzariere;
 - confermare che i PDF filtrati riepiloghino soltanto la categoria selezionata;
 - provare una categoria senza misure;
