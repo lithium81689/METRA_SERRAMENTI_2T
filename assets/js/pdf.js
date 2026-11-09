@@ -106,8 +106,7 @@ function pdfMeasurementIdentity(m){
         presente: true,
         larghezza: normalizePdfIdentityNumber(m.cassonetto.larghezza),
         altezza: normalizePdfIdentityNumber(m.cassonetto.altezza),
-        profondita: normalizePdfIdentityNumber(m.cassonetto.profondita),
-        note: normalizePdfIdentityText(m.cassonetto.note)
+        profondita: normalizePdfIdentityNumber(m.cassonetto.profondita)
       }
     : { presente: false };
 
@@ -124,8 +123,7 @@ function pdfMeasurementIdentity(m){
     balconeTipologia: tipo==='balcone' ? normalizePdfIdentityText(m.balconeTipologia) : '',
     zanzarieraTipo: tipo==='zanzariera' ? normalizePdfIdentityText(m.zanzarieraTipo) : '',
     cavoPosizione: tipo==='tenda_oscurante' ? normalizePdfIdentityText(m.cavoPosizione) : '',
-    cassonetto,
-    note: normalizePdfIdentityText(m.note)
+    cassonetto
   };
 }
 function pdfMeasurementIdentityKey(m){
@@ -138,11 +136,21 @@ function groupPdfMeasurements(measurements){
     const key = pdfMeasurementIdentityKey(m);
     let group = groupsByKey.get(key);
     if (!group){
-      group = { measure: m, quantity: 0 };
+      group = { measure: m, quantity: 0, noteItems: [] };
       groupsByKey.set(key, group);
       groups.push(group);
     }
-    group.quantity += quantityVal(m);
+    const quantity = quantityVal(m);
+    group.quantity += quantity;
+    const note = normalizePdfIdentityText(m.note);
+    const cassonettoNote = normalizePdfIdentityText(
+      normalizePdfIdentityText(m.tipo)==='finestra' && m.cassonetto && m.cassonetto.presente
+        ? m.cassonetto.note
+        : ''
+    );
+    for (let index=0; index<quantity; index++){
+      group.noteItems.push({ note, cassonettoNote });
+    }
   });
   return groups;
 }
@@ -337,7 +345,6 @@ function downloadClientPDF(clientId, tipoFiltro=null){
         const apertura = usesApertura(m.tipo) ? aperturaLabel(m.apertura) : '';
         const details = measureDetailsText(m);
         const cass = cassonettoText(m.cassonetto);
-        const cassNote = m.cassonetto && m.cassonetto.note ? ' - ' + m.cassonetto.note : '';
         const misuraLine = usesApertura(m.tipo)
           ? 'Misure: L ' + fmtNum(m.larghezza) + ' mm - H ' + fmtNum(m.altezza) + ' mm - P ' + fmtNum(m.profondita) + ' mm - Apertura: ' + apertura
           : 'Misure: L ' + fmtNum(m.larghezza) + ' mm - H ' + fmtNum(m.altezza) + ' mm - P ' + fmtNum(m.profondita) + ' mm';
@@ -346,8 +353,14 @@ function downloadClientPDF(clientId, tipoFiltro=null){
           { text: misuraLine, size: 9.5, bold: false, indent: 12, spacing: 13 }
         ];
         if (details) lines.push({ text: 'Dettagli: ' + details, size: 9.5, bold: false, indent: 12, spacing: 13 });
-        if (cass) lines.push({ text: 'Cassonetto: ' + cass + cassNote, size: 9.5, bold: false, indent: 12, spacing: 13 });
-        if (m.note) lines.push({ text: 'Note: ' + m.note, size: 9.5, bold: false, indent: 12, spacing: 13 });
+        if (cass) lines.push({ text: 'Cassonetto: ' + cass, size: 9.5, bold: false, indent: 12, spacing: 13 });
+        const hasCassonettoNotes = cass && group.noteItems.some(item=>item.cassonettoNote);
+        group.noteItems.forEach((item,index)=>{
+          lines.push({ text: 'Nota ' + (index+1) + ': ' + (item.note || '-'), size: 9.5, bold: false, indent: 12, spacing: 13 });
+          if (hasCassonettoNotes){
+            lines.push({ text: 'Nota cassonetto ' + (index+1) + ': ' + (item.cassonettoNote || '-'), size: 9.5, bold: false, indent: 12, spacing: 13 });
+          }
+        });
         summaryIndex += 1;
         return lines;
       });
@@ -364,7 +377,7 @@ function downloadClientPDF(clientId, tipoFiltro=null){
   const summaryIntroItems = [
     { text: 'RIEPILOGO MISURAZIONI', size: 14, indent: 0, spacing: 19 },
     {
-      text: 'Gli elementi con specifiche identiche sono accorpati e riportati con la quantita totale.',
+      text: 'Gli elementi dello stesso tipo con dati identici, escluse le note, sono accorpati e riportati con la quantita totale. Per ogni unita conteggiata viene riportata una nota numerata.',
       size: 9,
       indent: 0,
       spacing: 13
@@ -383,7 +396,7 @@ function downloadClientPDF(clientId, tipoFiltro=null){
   y -= 8;
   content += line(M, y, PAGE_W-M, y, 1.2); y -= 22;
   addLine('RIEPILOGO MISURAZIONI', 14, true, 0, 19);
-  addLine('Gli elementi con specifiche identiche sono accorpati e riportati con la quantita totale.', 9);
+  addLine('Gli elementi dello stesso tipo con dati identici, escluse le note, sono accorpati e riportati con la quantita totale. Per ogni unita conteggiata viene riportata una nota numerata.', 9);
   y -= 5;
 
   if (groupedMeasurements.length===0){
