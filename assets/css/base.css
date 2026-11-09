@@ -1,0 +1,39 @@
+  :root{
+    --paper:#F6F4EE;
+    --paper-dim:#EFEBDF;
+    --ink:#1E2A38;
+    --ink-soft:#5B6B7A;
+    --ink-faint:#8B96A3;
+    --blueprint:#2E5C8A;
+    --blueprint-dark:#1F4568;
+    --copper:#C1793C;
+    --line:#D8D3C4;
+    --line-dark:#C3BCA8;
+    --success:#4C7A5E;
+    --danger:#B44B3E;
+    --card:#FFFFFF;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+    --radius:3px;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:28px 28px;
+    background-attachment:fixed;
+    font-family:var(--font-body);
+    color:var(--ink);
+    min-height:100vh;
+    overscroll-behavior-y:none;
+  }
+  ::selection{background:var(--copper);color:#fff;}
+  button{font-family:var(--font-body);cursor:pointer;}
+  input,select,textarea{font-family:var(--font-body);}
+  a{color:inherit;}

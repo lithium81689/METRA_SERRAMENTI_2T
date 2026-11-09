@@ -1,0 +1,23 @@
+  /* ---------- print / PDF area ---------- */
+  #printArea{display:none;}
+  @media print{
+    body{background:#fff;}
+    #app, .toast{display:none !important;}
+    #printArea{display:block !important;}
+    .print-page{padding:0 8mm;}
+    .print-company-header{text-align:center;border-bottom:2px solid #1E2A38;padding-bottom:12px;margin-bottom:18px;}
+    .print-company-logo{display:block;max-width:300px;width:100%;height:auto;margin:0 auto 12px;}
+    .print-company-line{font-size:11.5px;line-height:1.45;color:#1E2A38;margin:2px 0;}
+    .print-company-line.primary{font-weight:700;}
+    .print-header{border-bottom:1px solid #C3BCA8;padding-bottom:12px;margin-bottom:18px;}
+    .print-header h1{font-family:'Space Grotesk',sans-serif;font-size:20px;margin:0 0 10px;}
+    .print-client-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+    .print-client-grid .lbl{color:#5B6B7A;text-transform:uppercase;font-size:9px;letter-spacing:.05em;}
+    .print-room{margin-bottom:16px;page-break-inside:avoid;}
+    .print-room h2{font-family:'Space Grotesk',sans-serif;font-size:15px;border-bottom:1px solid #C3BCA8;padding-bottom:5px;margin:0 0 8px;}
+    .print-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+    .print-table th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;color:#5B6B7A;padding:4px 8px;border-bottom:1px solid #1E2A38;}
+    .print-table td{padding:6px 8px;border-bottom:1px solid #D8D3C4;vertical-align:top;}
+    .print-type-tag{display:inline-block;font-size:9.5px;font-family:'IBM Plex Mono',monospace;color:#fff;padding:2px 6px;border-radius:2px;}
+    .print-footer{margin-top:20px;font-size:9.5px;color:#8B96A3;font-family:'IBM Plex Mono',monospace;}
+  }
