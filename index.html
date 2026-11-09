@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<title>Scheda Misurazioni — Serramenti</title>
+
+<!-- PWA / iOS home screen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Misurazioni">
+<meta name="theme-color" content="#F6F4EE">
+<link id="appleIconLink" rel="apple-touch-icon" href="">
+<link id="faviconLink" rel="icon" href="">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/print.css">
+<link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <rect x="3" y="3" width="20" height="20" rx="1" stroke="#2E5C8A" stroke-width="1.6"/>
+          <path d="M3 9.5H23M9.5 3V23" stroke="#2E5C8A" stroke-width="1.2"/>
+          <path d="M1.5 6.5H4.5M1.5 3V6.5" stroke="#C1793C" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h1>Scheda Misurazioni</h1>
+          <div class="sub">Serramenti · Porte · Balconi · Avvolgibili · Zanzariere · Tende</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-toolbar">
+      <button class="btn btn-block" id="btnNewClient">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1V13M1 7H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Nuovo cliente
+      </button>
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4"/><path d="M9.5 9.5L13 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <input type="text" id="searchInput" placeholder="Cerca cliente…">
+      </div>
+    </div>
+    <div class="client-list" id="clientList"></div>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-sm" id="btnExport" title="Scarica un backup JSON di tutti i dati">Esporta backup</button>
+      <button class="btn btn-ghost btn-sm" id="btnImport" title="Ripristina da un file di backup">Importa backup</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
+    <div class="sidebar-resizer" id="sidebarResizer" title="Trascina per allargare o stringere l'elenco clienti"></div>
+  </aside>
+
+  <main class="main" id="mainArea"></main>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="overlay" id="clientOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="clientModalTitle">Nuovo cliente</h3>
+      <button class="icon-btn" onclick="closeModal('clientOverlay')">
+        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="cName">Nome e cognome *</label>
+        <input type="text" id="cName" placeholder="es. Mario Rossi">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="cDate">Data sopralluogo</label>
+          <input type="date" id="cDate">
+        </div>
+        <div class="field" style="grid-column:span 2;">
+          <label for="cPhone">Telefono</label>
+          <input type="tel" id="cPhone" placeholder="es. 333 1234567">
+        </div>
+      </div>
+      <div class="field">
+        <label for="cEmail">Email</label>
+        <input type="email" id="cEmail" placeholder="es. mario.rossi@email.it">
+      </div>
+      <div class="field">
+        <label for="cNotes">Note</label>
+        <textarea id="cNotes" placeholder="Indirizzo, indicazioni, richieste particolari…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('clientOverlay')">Annulla</button>
+      <button class="btn" id="btnSaveClient">Salva cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM MODAL -->
+<div class="overlay" id="roomOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="roomModalTitle">Nuova stanza</h3>
+      <button class="icon-btn" onclick="closeModal('roomOverlay')">
+        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="rName">Nome stanza *</label>
+        <input type="text" id="rName" placeholder="es. Cucina, Camera 1, Soggiorno…">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('roomOverlay')">Annulla</button>
+      <button class="btn" id="btnSaveRoom">Salva stanza</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEASUREMENT MODAL -->
+<div class="overlay" id="measureOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="measureModalTitle">Nuova misurazione</h3>
+      <button class="icon-btn" onclick="closeModal('measureOverlay')">
+        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="mType">Tipo elemento *</label>
+        <select id="mType" onchange="onMeasureTypeChange()">
+          <option value="finestra">Serramento</option>
+          <option value="porta">Porta</option>
+          <option value="balcone">Balcone</option>
+          <option value="serranda">Avvolgibile</option>
+          <option value="zanzariera">Zanzariera</option>
+          <option value="tenda_oscurante">Tenda Oscurante</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="mRoom">Stanza *</label>
+        <select id="mRoom" onchange="onRoomSelectChange()">
+        </select>
+        <input type="text" id="mNewRoomName" placeholder="Nome della nuova stanza" style="margin-top:8px;display:none;">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="mWidth">Larghezza *</label>
+          <div class="unit-input"><input type="number" step="1" min="0" id="mWidth" placeholder="0"><span>mm</span></div>
+        </div>
+        <div class="field">
+          <label for="mHeight">Altezza *</label>
+          <div class="unit-input"><input type="number" step="1" min="0" id="mHeight" placeholder="0"><span>mm</span></div>
+        </div>
+        <div class="field">
+          <label for="mDepth">Profondità</label>
+          <div class="unit-input"><input type="number" step="1" min="0" id="mDepth" placeholder="0"><span>mm</span></div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="mQuantity">Quantità *</label>
+          <input type="number" step="1" min="1" id="mQuantity" value="1" placeholder="1">
+        </div>
+        <div class="field" id="mAnteField" style="grid-column:span 2;">
+          <label for="mNumeroAnte">Numero ante</label>
+          <select id="mNumeroAnte">
+            <option value="1">1 anta</option>
+            <option value="2">2 ante</option>
+          </select>
+        </div>
+      </div>
+      <div id="mBalconeFields" class="conditional-panel" style="display:none;">
+        <div class="field-row">
+          <div class="field">
+            <label for="mBalconeElemento">Elemento balcone</label>
+            <select id="mBalconeElemento">
+              <option value="finestra">Finestra</option>
+              <option value="porta-finestra">Porta-Finestra</option>
+            </select>
+          </div>
+          <div class="field" style="grid-column:span 2;">
+            <label for="mBalconeTipologia">Tipologia balcone</label>
+            <select id="mBalconeTipologia">
+              <option value="Vicentina">Vicentina</option>
+              <option value="Padovana">Padovana</option>
+              <option value="Vic. Rovescia">Vic. Rovescia</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="mCassonettoWrap" class="conditional-panel" style="display:none;">
+        <label class="checkbox-row">
+          <input type="checkbox" id="mCassonettoPresente" onchange="toggleCassonettoDetails()">
+          <span>Cassonetto</span>
+        </label>
+        <div id="mCassonettoDetails" style="display:none;margin-top:10px;">
+          <div class="field-row">
+            <div class="field">
+              <label for="mCassWidth">Larghezza cassonetto</label>
+              <div class="unit-input"><input type="number" step="1" min="0" id="mCassWidth" placeholder="0"><span>mm</span></div>
+            </div>
+            <div class="field">
+              <label for="mCassHeight">Altezza cassonetto</label>
+              <div class="unit-input"><input type="number" step="1" min="0" id="mCassHeight" placeholder="0"><span>mm</span></div>
+            </div>
+            <div class="field">
+              <label for="mCassDepth">Profondità cassonetto</label>
+              <div class="unit-input"><input type="number" step="1" min="0" id="mCassDepth" placeholder="0"><span>mm</span></div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="mCassNotes">Note cassonetto</label>
+            <textarea id="mCassNotes" placeholder="Note relative al cassonetto…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div id="mZanzarieraFields" class="conditional-panel" style="display:none;">
+        <div class="field">
+          <label for="mZanzarieraTipo">Tipo zanzariera</label>
+          <select id="mZanzarieraTipo">
+            <option value="verticale">Verticale</option>
+            <option value="laterale">Laterale</option>
+          </select>
+          <div class="hint">Indica se la zanzariera è verticale oppure laterale.</div>
+        </div>
+      </div>
+      <div id="mTendaFields" class="conditional-panel" style="display:none;">
+        <div class="field">
+          <label for="mCavoPosizione">Posizione cavo</label>
+          <select id="mCavoPosizione">
+            <option value="">Non specificata</option>
+            <option value="destra">Destra</option>
+            <option value="sinistra">Sinistra</option>
+          </select>
+          <div class="hint">Dato opzionale: destra/sinistra guardando la tenda dall'interno della stanza.</div>
+        </div>
+      </div>
+      <div class="field" id="mAperturaField">
+        <label>Senso di apertura</label>
+        <div class="seg-control">
+          <button type="button" class="seg-btn" data-val="" onclick="setApertura('')">Non spec.</button>
+          <button type="button" class="seg-btn" data-val="sinistra" onclick="setApertura('sinistra')">Sinistra</button>
+          <button type="button" class="seg-btn" data-val="destra" onclick="setApertura('destra')">Destra</button>
+        </div>
+        <div class="hint" id="mAperturaHint"></div>
+      </div>
+      <div class="field" id="mTipoMisuraField">
+        <label>Tipo misura *</label>
+        <div class="measure-choice-group" role="radiogroup" aria-label="Tipo misura obbligatorio">
+          <label class="checkbox-row measure-choice">
+            <input type="radio" name="mTipoMisura" id="mMisuraPiena" value="piena" required>
+            <span>Misura Piena</span>
+          </label>
+          <label class="checkbox-row measure-choice">
+            <input type="radio" name="mTipoMisura" id="mMisuraDaFare" value="da_fare" required>
+            <span>Misura Da Fare</span>
+          </label>
+        </div>
+        <div class="hint">Seleziona obbligatoriamente una delle due opzioni.</div>
+      </div>
+      <div class="field" id="mMisuraLuceField" style="display:none;">
+        <label class="checkbox-row">
+          <input type="checkbox" id="mMisuraLuce">
+          <span>Misura Luce</span>
+        </label>
+      </div>
+      <div class="field">
+        <label for="mNotes">Note</label>
+        <textarea id="mNotes" placeholder="Materiale, colore, condizioni del vano…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('measureOverlay')">Annulla</button>
+      <button class="btn" id="btnSaveMeasure">Salva misurazione</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-head">
+      <h3>Confermi l'eliminazione?</h3>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 6px;" id="confirmText">Questa azione non può essere annullata.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('confirmOverlay')">Annulla</button>
+      <button class="btn btn-danger" id="btnConfirmDelete">Elimina</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Printable / PDF area (populated dynamically before window.print()) -->
+<div id="printArea"></div>
+
+<script src="assets/js/state.js"></script>
+<script src="assets/js/utils.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/storage.js"></script>
+<script src="assets/js/rendering.js"></script>
+<script src="assets/js/clients.js"></script>
+<script src="assets/js/rooms.js"></script>
+<script src="assets/js/measurements.js"></script>
+<script src="assets/js/pdf-logo.js"></script>
+<script src="assets/js/pdf.js"></script>
+<script src="assets/js/backup.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
